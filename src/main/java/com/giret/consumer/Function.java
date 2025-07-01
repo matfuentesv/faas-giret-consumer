@@ -2,11 +2,15 @@ package com.giret.consumer;
 
 
 import com.giret.consumer.model.LoanEvent;
+import com.giret.consumer.repository.ResourceRepository;
+import com.giret.consumer.services.ConsumerService;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.annotation.EventGridTrigger;
 import com.microsoft.azure.functions.annotation.FunctionName;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -23,11 +27,8 @@ public class Function {
     private static final ApplicationContext context =
             new SpringApplicationBuilder(SpringBootAzureApp.class).run();
 
-//    private final ResourceRepository resourceRepository =
-//            context.getBean(ResourceRepository.class);
-
-//    private final LoanRepository loanRepository =
-//            context.getBean(LoanRepository.class);
+    //private final ConsumerService consumerService =
+      //      context.getBean(ConsumerService.class); 
 
     @FunctionName("EventGridEvents")
     public void run(
