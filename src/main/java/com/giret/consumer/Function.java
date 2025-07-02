@@ -1,22 +1,18 @@
 package com.giret.consumer;
 
-
 import com.giret.consumer.model.LoanEvent;
-import com.giret.consumer.repository.ResourceRepository;
+import com.giret.consumer.model.Resource;
 import com.giret.consumer.services.ConsumerService;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.annotation.EventGridTrigger;
 import com.microsoft.azure.functions.annotation.FunctionName;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import java.util.List;
 import java.util.logging.Logger;
-
-
 
 
 @Component
@@ -24,11 +20,8 @@ public class Function {
 
     private final Gson gson = new Gson();
 
-    private static final ApplicationContext context =
-            new SpringApplicationBuilder(SpringBootAzureApp.class).run();
 
-    //private final ConsumerService consumerService =
-      //      context.getBean(ConsumerService.class); 
+
 
     @FunctionName("EventGridEvents")
     public void run(
@@ -37,6 +30,26 @@ public class Function {
     ) {
         Logger logger = context.getLogger();
         logger.info("🚀 Función con Event Grid trigger ejecutada.");
+
+
+        try {
+            logger.info("✅ Antes de levantar contexto Spring");
+            ApplicationContext ctx = new SpringApplicationBuilder(SpringBootAzureApp.class)
+                    .web(org.springframework.boot.WebApplicationType.NONE)
+                    .run();
+
+            logger.info("✅ Contexto Spring levantado");
+            ConsumerService consumerService = ctx.getBean(ConsumerService.class);
+            logger.info("✅ Bean ConsumerService OK");
+
+            List<Resource> r = consumerService.findResourceById(81L);
+            logger.info("Recurso: " + r);
+
+        } catch (Exception e) {
+            logger.severe("💥 Error levantando contexto Spring: " + e.getMessage());
+            e.printStackTrace();
+        }
+
 
         try {
             logger.info("📦 Payload recibido: " + content);
@@ -56,7 +69,7 @@ public class Function {
                 case "Prestamo.CREADO":
                     logger.info("✅ Procesando: Prestamo.CREADO");
                     //resourceRepository.updateState(recursoId, "Prestado");
-                    //loanRepository.updateLoan(prestamoId, "Activo");
+                    //consumerService.updateState(prestamoId, "Activo");
                     logger.info("📌 Estados actualizados: Recurso -> 'Prestado', Prestamo -> 'Activo'");
                     break;
 
@@ -78,7 +91,7 @@ public class Function {
 
     /**
      * ✅ Clase interna para Event Grid.
-     * Usa JsonElement para el campo `data` para evitar problemas de Gson.
+     * Usa JsonElement para el campo data para evitar problemas de Gson.
      */
     private static class EventGridEnvelope {
         private String eventType;

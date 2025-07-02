@@ -1,23 +1,28 @@
 package com.giret.consumer.services.impl;
 
-import com.giret.consumer.repository.LoanRepository;
-import com.giret.consumer.repository.ResourceRepository;
+import com.giret.consumer.client.ResourceClient;
+import com.giret.consumer.model.Resource;
 import com.giret.consumer.services.ConsumerService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
+
 @Service
-public class ConsumerServiceImpl implements ConsumerService {
+@RequiredArgsConstructor
+public class ConsumerServiceImpl implements ConsumerService{
 
-    @Autowired
-    LoanRepository loanRepository;
-
-    @Autowired
-    ResourceRepository resourceRepository;
+    private final ResourceClient resourceClient;
 
 
     @Override
+    public List<Resource> findResourceById(Long id) {
+        return resourceClient.findAllResource();
+    }
+
+    @Override
     public void updateState(Long resourceId, String state) {
-        resourceRepository.updateState(resourceId, state);
+
     }
 }
