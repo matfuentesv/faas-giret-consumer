@@ -1,12 +1,12 @@
 package com.giret.consumer.client;
 
 
-import com.giret.consumer.model.Resource;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 
+import com.giret.consumer.model.Resource;
 
-import java.util.List;
 
 @FeignClient(
         name = "resourceClient",
@@ -14,8 +14,9 @@ import java.util.List;
 )
 public interface ResourceClient {
 
-    @GetMapping(value = "/api/findAllResource",produces = "application/json")
-    List<Resource> findAllResource();
+    @PutMapping(value = "/api/updateResourceByState/{id}/{state}",produces = "application/json")
+    Resource updateResourceByState(@PathVariable ("id")Long id,
+                                   @PathVariable ("state")String state);
 
 
 

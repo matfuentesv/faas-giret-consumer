@@ -16,13 +16,10 @@ public class ConsumerServiceImpl implements ConsumerService{
     private final ResourceClient resourceClient;
 
 
-    @Override
-    public List<Resource> findResourceById(Long id) {
-        return resourceClient.findAllResource();
-    }
+
 
     @Override
-    public void updateState(Long resourceId, String state) {
-
+    public Resource updateStateResource(Long resourceId, String state) {
+          return resourceClient.updateResourceByState(resourceId,state);
     }
 }

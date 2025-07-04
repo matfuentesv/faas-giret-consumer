@@ -1,5 +1,11 @@
 package com.giret.consumer;
 
+import java.util.logging.Logger;
+
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
 import com.giret.consumer.model.LoanEvent;
 import com.giret.consumer.model.Resource;
 import com.giret.consumer.services.ConsumerService;
@@ -8,20 +14,11 @@ import com.google.gson.JsonElement;
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.annotation.EventGridTrigger;
 import com.microsoft.azure.functions.annotation.FunctionName;
-import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
-import java.util.List;
-import java.util.logging.Logger;
-
 
 @Component
 public class Function {
 
     private final Gson gson = new Gson();
-
-
-
 
     @FunctionName("EventGridEvents")
     public void run(
@@ -30,7 +27,6 @@ public class Function {
     ) {
         Logger logger = context.getLogger();
         logger.info("🚀 Función con Event Grid trigger ejecutada.");
-
 
         try {
             logger.info("✅ Antes de levantar contexto Spring");
@@ -42,42 +38,54 @@ public class Function {
             ConsumerService consumerService = ctx.getBean(ConsumerService.class);
             logger.info("✅ Bean ConsumerService OK");
 
-            List<Resource> r = consumerService.findResourceById(81L);
-            logger.info("Recurso: " + r);
-
-        } catch (Exception e) {
-            logger.severe("💥 Error levantando contexto Spring: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-
-        try {
             logger.info("📦 Payload recibido: " + content);
 
-            // ✅ Deserializar correctamente usando JsonElement
+            // ✅ Deserializar usando envoltorio
             EventGridEnvelope envelope = gson.fromJson(content, EventGridEnvelope.class);
 
             logger.info("🔑 Tipo de evento: " + envelope.getEventType());
 
-            LoanEvent eventData = gson.fromJson(envelope.getData(), LoanEvent.class);
-            logger.info("📄 Data parseada: " + eventData);
-
-            Long prestamoId = eventData.getMembers().getPrestamoId().getValue();
-            Long recursoId = eventData.getMembers().getRecursoId().getValue();
-
             switch (envelope.getEventType()) {
+                case "Recurso.CREADO":
+                    logger.info("✅ Procesando: Recurso.CREADO");
+                    // Deserializa como Resource
+                    Resource recurso = gson.fromJson(envelope.getData(), Resource.class);
+                    logger.info("📄 Data parseada: " + recurso);
+
+                    Long recursoId = recurso.getIdRecurso();
+                    logger.info("🔑 Recurso ID: " + recursoId);
+
+                    consumerService.updateStateResource(recursoId, "prestado");
+                    logger.info("📌 Estado actualizado: Recurso -> 'Prestado'");
+                    break;
+
                 case "Prestamo.CREADO":
                     logger.info("✅ Procesando: Prestamo.CREADO");
-                    //resourceRepository.updateState(recursoId, "Prestado");
-                    //consumerService.updateState(prestamoId, "Activo");
-                    logger.info("📌 Estados actualizados: Recurso -> 'Prestado', Prestamo -> 'Activo'");
+                    // Deserializa como LoanEvent
+                    LoanEvent prestamoEvent = gson.fromJson(envelope.getData(), LoanEvent.class);
+                    logger.info("📄 Data parseada: " + prestamoEvent);
+
+                    Long prestamoId = prestamoEvent.getMembers().getPrestamoId().getValue();
+                    Long recursoIdPrestamo = prestamoEvent.getMembers().getRecursoId().getValue();
+
+                    logger.info("🔑 Prestamo ID: " + prestamoId + ", Recurso ID: " + recursoIdPrestamo);
+
+                    consumerService.updateStateResource(prestamoId, "Activo");
+                    logger.info("📌 Estados actualizados: Prestamo -> 'Activo'");
                     break;
 
                 case "Prestamo.DEVUELTO":
                     logger.info("✅ Procesando: Prestamo.DEVUELTO");
-                    //loanRepository.updateLoan(prestamoId, "Devuelto");
-                    //resourceRepository.updateState(recursoId, "Bodega");
+                    // Deserializa como LoanEvent
+                    LoanEvent devueltoEvent = gson.fromJson(envelope.getData(), LoanEvent.class);
+                    Long prestamoIdDev = devueltoEvent.getMembers().getPrestamoId().getValue();
+                    Long recursoIdDev = devueltoEvent.getMembers().getRecursoId().getValue();
+
+                    logger.info("🔑 Prestamo ID: " + prestamoIdDev + ", Recurso ID: " + recursoIdDev);
                     logger.info("📌 Estados actualizados: Prestamo -> 'Devuelto', Recurso -> 'Bodega'");
+                    // Aquí pones tus actualizaciones reales:
+                    // consumerService.updateLoan(prestamoIdDev, "Devuelto");
+                    // consumerService.updateStateResource(recursoIdDev, "Bodega");
                     break;
 
                 default:
@@ -86,12 +94,12 @@ public class Function {
 
         } catch (Exception e) {
             logger.severe("💥 Error procesando evento: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     /**
-     * ✅ Clase interna para Event Grid.
-     * Usa JsonElement para el campo data para evitar problemas de Gson.
+     * ✅ Clase interna para envolver el Event Grid
      */
     private static class EventGridEnvelope {
         private String eventType;
