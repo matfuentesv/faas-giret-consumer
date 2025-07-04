@@ -2,6 +2,7 @@ package com.giret.consumer;
 
 import java.util.logging.Logger;
 
+import com.giret.consumer.model.Loan;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -46,8 +47,8 @@ public class Function {
             logger.info("🔑 Tipo de evento: " + envelope.getEventType());
 
             switch (envelope.getEventType()) {
-                case "Recurso.CREADO":
-                    logger.info("✅ Procesando: Recurso.CREADO");
+                case "Recurso.PRESTADO":
+                    logger.info("✅ Procesando: Recurso.PRESTADO");
                     // Deserializa como Resource
                     Resource recurso = gson.fromJson(envelope.getData(), Resource.class);
                     logger.info("📄 Data parseada: " + recurso);
@@ -62,16 +63,14 @@ public class Function {
                 case "Prestamo.CREADO":
                     logger.info("✅ Procesando: Prestamo.CREADO");
                     // Deserializa como LoanEvent
-                    LoanEvent prestamoEvent = gson.fromJson(envelope.getData(), LoanEvent.class);
-                    logger.info("📄 Data parseada: " + prestamoEvent);
+                    Loan prestamo = gson.fromJson(envelope.getData(), Loan.class);
+                    logger.info("📄 Data parseada: " + prestamo);
 
-                    Long prestamoId = prestamoEvent.getMembers().getPrestamoId().getValue();
-                    Long recursoIdPrestamo = prestamoEvent.getMembers().getRecursoId().getValue();
+                    Long idPrestamo = prestamo.getIdPrestamo();
+                    logger.info("🔑 Recurso ID: " + idPrestamo);
 
-                    logger.info("🔑 Prestamo ID: " + prestamoId + ", Recurso ID: " + recursoIdPrestamo);
-
-                    consumerService.updateStateResource(prestamoId, "Activo");
-                    logger.info("📌 Estados actualizados: Prestamo -> 'Activo'");
+                    consumerService.updateLoanByState( "atrasado",idPrestamo);
+                    logger.info("📌 Estados actualizados: Prestamo -> 'atrasado'");
                     break;
 
                 case "Prestamo.DEVUELTO":
