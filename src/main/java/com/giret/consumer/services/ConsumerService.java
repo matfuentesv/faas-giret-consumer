@@ -7,5 +7,5 @@ public interface ConsumerService {
 
 
     Resource updateStateResource (Long resourceId,String state);
-    Loan updateLoanByState (String state,Long resourceId);
+    Loan updateLoanByState (String state,Long id);
 }

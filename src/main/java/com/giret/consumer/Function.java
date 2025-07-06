@@ -2,16 +2,16 @@ package com.giret.consumer;
 
 import java.util.logging.Logger;
 
-import com.giret.consumer.model.Loan;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import com.giret.consumer.model.LoanEvent;
+import com.giret.consumer.model.Loan;
 import com.giret.consumer.model.Resource;
 import com.giret.consumer.services.ConsumerService;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.annotation.EventGridTrigger;
 import com.microsoft.azure.functions.annotation.FunctionName;
@@ -76,15 +76,15 @@ public class Function {
                 case "Prestamo.DEVUELTO":
                     logger.info("✅ Procesando: Prestamo.DEVUELTO");
                     // Deserializa como LoanEvent
-                    LoanEvent devueltoEvent = gson.fromJson(envelope.getData(), LoanEvent.class);
-                    Long prestamoIdDev = devueltoEvent.getMembers().getPrestamoId().getValue();
-                    Long recursoIdDev = devueltoEvent.getMembers().getRecursoId().getValue();
+                    JsonObject data = envelope.getData().getAsJsonObject();
+                    Long prestamoIdDev = data.get("prestamoId").getAsLong();
+                    Long recursoIdDev = data.get("recursoId").getAsLong();
 
-                    logger.info("🔑 Prestamo ID: " + prestamoIdDev + ", Recurso ID: " + recursoIdDev);
-                    logger.info("📌 Estados actualizados: Prestamo -> 'Devuelto', Recurso -> 'Bodega'");
+                    logger.info("🔑 Prestamo ID: " + prestamoIdDev + ", Prestamo ID: " + prestamoIdDev);
+                    logger.info("📌 Estados actualizados: Prestamo -> 'devuelto', Recurso -> 'Bodega'");
                     // Aquí pones tus actualizaciones reales:
-                    // consumerService.updateLoan(prestamoIdDev, "Devuelto");
-                    // consumerService.updateStateResource(recursoIdDev, "Bodega");
+                     consumerService.updateLoanByState("devuelto", prestamoIdDev);
+                     consumerService.updateStateResource(recursoIdDev, "Bodega");
                     break;
 
                 default:

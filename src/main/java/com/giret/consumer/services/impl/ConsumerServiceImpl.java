@@ -24,7 +24,7 @@ public class ConsumerServiceImpl implements ConsumerService{
     }
 
     @Override
-    public Loan updateLoanByState(String state,Long resourceId) {
-        return loanClient.updateLoanByState(state,resourceId);
+    public Loan updateLoanByState(String state,Long id) {
+        return loanClient.updateLoanByState(state,id);
     }
 }
